@@ -65,7 +65,7 @@ def seed_historical_invoices() -> None:
         {
             "id": "inv-hist-happy-01",
             "vendor_name": "Acme Supplies",
-            "invoice_number": "INV-ACME-2026-001",
+            "invoice_number": "INV-ACME-HIST-001",
             "invoice_date": "2026-09-15",
             "po_reference": "PO-1001",
             "subtotal": 2820.00,
@@ -93,7 +93,7 @@ def seed_historical_invoices() -> None:
                 "rules": [
                     RuleResult(rule_name="critical_field_check", passed=True, detail="All critical fields present with confidence >= 0.70"),
                     RuleResult(rule_name="arithmetic_check", passed=True, detail="Arithmetic verified: subtotal $2,820.00 + tax $282.00 = $3,102.00"),
-                    RuleResult(rule_name="duplicate_check", passed=True, detail="No duplicate found for vendor 'Acme Supplies' / invoice 'INV-ACME-2026-001'"),
+                    RuleResult(rule_name="duplicate_check", passed=True, detail="No duplicate found for vendor 'Acme Supplies' / invoice 'INV-ACME-HIST-001'"),
                     RuleResult(rule_name="approved_vendor_check", passed=True, detail="Vendor 'Acme Supplies' is on the approved-vendor list"),
                     RuleResult(rule_name="po_match", passed=True, detail="Matched PO PO-1001 (vendor: Acme Supplies, amount: $5,000.00)"),
                     RuleResult(rule_name="po_status_check", passed=True, detail="PO PO-1001 is open -- eligible for invoicing"),
@@ -106,7 +106,7 @@ def seed_historical_invoices() -> None:
         {
             "id": "inv-hist-flagged-tol",
             "vendor_name": "Sigma Consulting",
-            "invoice_number": "INV-SIGMA-2026-44",
+            "invoice_number": "INV-SIGMA-HIST-044",
             "invoice_date": "2026-09-20",
             "po_reference": "PO-1008",
             "subtotal": 9372.73,
@@ -133,7 +133,7 @@ def seed_historical_invoices() -> None:
                 "rules": [
                     RuleResult(rule_name="critical_field_check", passed=True, detail="All critical fields present with confidence >= 0.70"),
                     RuleResult(rule_name="arithmetic_check", passed=True, detail="Arithmetic verified: subtotal $9,372.73 + tax $937.27 = $10,310.00"),
-                    RuleResult(rule_name="duplicate_check", passed=True, detail="No duplicate found for vendor 'Sigma Consulting' / invoice 'INV-SIGMA-2026-44'"),
+                    RuleResult(rule_name="duplicate_check", passed=True, detail="No duplicate found for vendor 'Sigma Consulting' / invoice 'INV-SIGMA-HIST-044'"),
                     RuleResult(rule_name="approved_vendor_check", passed=True, detail="Vendor 'Sigma Consulting' is on approved list"),
                     RuleResult(rule_name="po_match", passed=True, detail="Matched PO PO-1008 (vendor: Sigma Consulting, amount: $10,000.00)"),
                     RuleResult(rule_name="po_status_check", passed=True, detail="PO PO-1008 is open"),
@@ -146,7 +146,7 @@ def seed_historical_invoices() -> None:
         {
             "id": "inv-hist-flagged-scan",
             "vendor_name": "Omega Freight (unverified)",
-            "invoice_number": "INV-OF-2026-99",
+            "invoice_number": "INV-OF-HIST-099",
             "invoice_date": "2026-09-22",
             "po_reference": "PO-1009",
             "subtotal": 3850.00,
@@ -187,7 +187,7 @@ def seed_historical_invoices() -> None:
         {
             "id": "inv-hist-rejected-dup",
             "vendor_name": "Acme Supplies",
-            "invoice_number": "INV-ACME-2026-001",
+            "invoice_number": "INV-ACME-HIST-001",
             "invoice_date": "2026-09-25",
             "po_reference": "PO-1001",
             "subtotal": 2820.00,
@@ -211,7 +211,7 @@ def seed_historical_invoices() -> None:
             "decision": {
                 "status": "REJECTED",
                 "reason_code": "DUPLICATE_INVOICE",
-                "reason_detail": "Duplicate of invoice inv-hist-happy-01 (same vendor 'Acme Supplies' + invoice number 'INV-ACME-2026-001') processed on 2026-09-15.",
+                "reason_detail": "Duplicate of invoice inv-hist-happy-01 (same vendor 'Acme Supplies' + invoice number 'INV-ACME-HIST-001') processed on 2026-09-15.",
                 "rules": [
                     RuleResult(rule_name="critical_field_check", passed=True, detail="All critical fields present with confidence >= 0.70"),
                     RuleResult(rule_name="arithmetic_check", passed=True, detail="Arithmetic verified"),

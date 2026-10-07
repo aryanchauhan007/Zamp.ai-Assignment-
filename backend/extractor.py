@@ -142,7 +142,36 @@ def _build_invoice_from_data(
     extraction_method: str,
 ) -> Invoice:
     """Map raw extracted dict → Invoice Pydantic model."""
-    confidence: dict[str, float] = data.get("confidence", {})
+    raw_confidence = data.get("confidence", {})
+    confidence: dict[str, float] = {}
+    if isinstance(raw_confidence, dict):
+        for k, v in raw_confidence.items():
+            if isinstance(v, (int, float)):
+                confidence[k] = float(v)
+            elif isinstance(v, list) and v and isinstance(v[0], dict):
+                scores = [float(x.get("description", 1.0)) for x in v if isinstance(x, dict)]
+                if scores:
+                    confidence[k] = sum(scores) / len(scores)
+            else:
+                try:
+                    confidence[k] = float(v)
+                except (ValueError, TypeError):
+                    pass
+
+    # If document required vision OCR (image/scanned) or is low-quality, reflect visual uncertainty
+    if extraction_method == "vision" or "scanned" in source_file.lower() or "lowquality" in source_file.lower():
+        for k in list(confidence.keys()):
+            confidence[k] = min(confidence[k], 0.55)
+        if not confidence:
+            confidence = {
+                "vendor_name": 0.55,
+                "invoice_number": 0.50,
+                "invoice_date": 0.55,
+                "po_reference": 0.60,
+                "subtotal": 0.52,
+                "tax": 0.50,
+                "total": 0.48,
+            }
 
     line_items = [
         LineItem(
