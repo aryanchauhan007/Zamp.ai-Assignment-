@@ -21,6 +21,9 @@ import {
   ShieldAlert,
   Send,
   Check,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 import { InvoiceDetailResponse, RuleResult } from "@/types";
 
@@ -28,9 +31,25 @@ interface DecisionInspectorProps {
   detail: InvoiceDetailResponse;
   onClose?: () => void;
   onUpdated?: (updated: InvoiceDetailResponse) => void;
+  onNavigatePrev?: () => void;
+  onNavigateNext?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
+  currentIndex?: number;
+  totalInvoices?: number;
 }
 
-export function DecisionInspector({ detail, onClose, onUpdated }: DecisionInspectorProps) {
+export function DecisionInspector({
+  detail,
+  onClose,
+  onUpdated,
+  onNavigatePrev,
+  onNavigateNext,
+  hasPrev,
+  hasNext,
+  currentIndex,
+  totalInvoices,
+}: DecisionInspectorProps) {
   const [activeTab, setActiveTab] = useState<"rules" | "reconciliation" | "fields" | "logs">("rules");
   const [isSplitView, setIsSplitView] = useState<boolean>(true);
 
@@ -178,6 +197,102 @@ export function DecisionInspector({ detail, onClose, onUpdated }: DecisionInspec
         padding: "20px 24px",
       }}
     >
+      {/* Top Breadcrumbs & Queue Navigation Bar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 12,
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem" }}>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: "0.72rem", padding: "3px 8px", marginRight: 4 }}
+              title="Return to Invoices Dashboard"
+            >
+              <ArrowLeft size={12} />
+              <span>Back to Queue</span>
+            </button>
+          )}
+          <span style={{ color: "var(--text-dim)" }}>Invoices</span>
+          <span style={{ color: "var(--border-strong)" }}>/</span>
+          <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+            {invoice?.vendor_name || "Vendor"}
+          </span>
+          <span style={{ color: "var(--border-strong)" }}>/</span>
+          <span style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+            {invoice?.invoice_number || "Invoice"}
+          </span>
+        </div>
+
+        {/* Queue Sequential Navigation (Prev / Next) */}
+        {totalInvoices != null && totalInvoices > 1 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              background: "var(--bg-canvas)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              padding: "2px 4px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={onNavigatePrev}
+              disabled={!hasPrev}
+              className="btn btn-secondary btn-sm"
+              style={{
+                fontSize: "0.72rem",
+                padding: "2px 6px",
+                opacity: hasPrev ? 1 : 0.4,
+                cursor: hasPrev ? "pointer" : "not-allowed",
+              }}
+              title="Previous invoice in queue"
+            >
+              <ChevronLeft size={13} />
+              <span>Prev</span>
+            </button>
+
+            <span
+              style={{
+                fontSize: "0.72rem",
+                fontFamily: "var(--font-mono)",
+                color: "var(--text-dim)",
+                padding: "0 6px",
+                fontWeight: 600,
+              }}
+            >
+              {(currentIndex ?? 0) + 1} of {totalInvoices}
+            </span>
+
+            <button
+              type="button"
+              onClick={onNavigateNext}
+              disabled={!hasNext}
+              className="btn btn-secondary btn-sm"
+              style={{
+                fontSize: "0.72rem",
+                padding: "2px 6px",
+                opacity: hasNext ? 1 : 0.4,
+                cursor: hasNext ? "pointer" : "not-allowed",
+              }}
+              title="Next invoice in queue"
+            >
+              <span>Next</span>
+              <ChevronRight size={13} />
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Top Controls Bar */}
       <div
         style={{

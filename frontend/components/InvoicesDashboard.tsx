@@ -65,7 +65,7 @@ export function InvoicesDashboard({
 
   return (
     <div style={{ maxWidth: 1320, margin: "0 auto 36px auto" }}>
-      {/* 4 KPI Cards Header */}
+      {/* 4 KPI Cards Header (Interactive Navigation Filters) */}
       <div
         style={{
           display: "grid",
@@ -76,11 +76,17 @@ export function InvoicesDashboard({
       >
         {/* Total Processed */}
         <div
+          onClick={() => setFilterStatus("ALL")}
           className="dash-card"
           style={{
             padding: "18px 20px",
             borderTop: "3px solid var(--primary)",
+            cursor: "pointer",
+            boxShadow: filterStatus === "ALL" ? "0 0 0 2px var(--primary)" : "var(--shadow-xs)",
+            transition: "all 0.15s ease",
+            background: filterStatus === "ALL" ? "var(--bg-canvas)" : "#ffffff",
           }}
+          title="Click to filter by all invoices"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase" }}>
@@ -105,17 +111,23 @@ export function InvoicesDashboard({
             {totalCount}
           </p>
           <p style={{ fontSize: "0.74rem", color: "var(--text-dim)", marginTop: 2 }}>
-            Routed through business rule engine
+            Click to view all {totalCount} records
           </p>
         </div>
 
         {/* Auto-Approved */}
         <div
+          onClick={() => setFilterStatus("APPROVED")}
           className="dash-card"
           style={{
             padding: "18px 20px",
             borderTop: "3px solid var(--approved)",
+            cursor: "pointer",
+            boxShadow: filterStatus === "APPROVED" ? "0 0 0 2px var(--approved)" : "var(--shadow-xs)",
+            transition: "all 0.15s ease",
+            background: filterStatus === "APPROVED" ? "var(--approved-dim)" : "#ffffff",
           }}
+          title="Click to filter only Auto-Approved invoices"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase" }}>
@@ -140,17 +152,23 @@ export function InvoicesDashboard({
             {approvedCount}
           </p>
           <p style={{ fontSize: "0.74rem", color: "var(--text-dim)", marginTop: 2 }}>
-            {totalCount > 0 ? `${Math.round((approvedCount / totalCount) * 100)}% auto-approval rate` : "Clean matching within policy"}
+            {totalCount > 0 ? `${Math.round((approvedCount / totalCount) * 100)}% auto-approval rate (Filter)` : "Clean matching within policy"}
           </p>
         </div>
 
         {/* Flagged */}
         <div
+          onClick={() => setFilterStatus("FLAGGED")}
           className="dash-card"
           style={{
             padding: "18px 20px",
             borderTop: "3px solid var(--flagged)",
+            cursor: "pointer",
+            boxShadow: filterStatus === "FLAGGED" ? "0 0 0 2px var(--flagged)" : "var(--shadow-xs)",
+            transition: "all 0.15s ease",
+            background: filterStatus === "FLAGGED" ? "var(--flagged-dim)" : "#ffffff",
           }}
+          title="Click to filter only Flagged for Review invoices"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase" }}>
@@ -175,17 +193,23 @@ export function InvoicesDashboard({
             {flaggedCount}
           </p>
           <p style={{ fontSize: "0.74rem", color: "var(--text-dim)", marginTop: 2 }}>
-            Tolerance or extraction variances
+            Tolerance or extraction variances (Filter)
           </p>
         </div>
 
         {/* Rejected */}
         <div
+          onClick={() => setFilterStatus("REJECTED")}
           className="dash-card"
           style={{
             padding: "18px 20px",
             borderTop: "3px solid var(--rejected)",
+            cursor: "pointer",
+            boxShadow: filterStatus === "REJECTED" ? "0 0 0 2px var(--rejected)" : "var(--shadow-xs)",
+            transition: "all 0.15s ease",
+            background: filterStatus === "REJECTED" ? "var(--rejected-dim)" : "#ffffff",
           }}
+          title="Click to filter only Rejected invoices"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase" }}>
@@ -210,7 +234,7 @@ export function InvoicesDashboard({
             {rejectedCount}
           </p>
           <p style={{ fontSize: "0.74rem", color: "var(--text-dim)", marginTop: 2 }}>
-            Duplicate submission detected
+            Duplicate submission detected (Filter)
           </p>
         </div>
       </div>

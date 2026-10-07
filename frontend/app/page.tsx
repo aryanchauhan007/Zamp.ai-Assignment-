@@ -33,6 +33,45 @@ export default function Home() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const inspectorRef = useRef<HTMLDivElement>(null);
+
+  // Compute active invoice index within the invoice list for sequential review
+  const currentInvoiceId = activeDetail?.invoice?.id || activeDetail?.decision?.invoice_id;
+  const currentIndex = invoices.findIndex((i) => i.invoice_id === currentInvoiceId);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < invoices.length - 1;
+
+  const handleNavigatePrev = () => {
+    if (hasPrev) {
+      handleSelectInvoice(invoices[currentIndex - 1].invoice_id);
+    }
+  };
+
+  const handleNavigateNext = () => {
+    if (hasNext) {
+      handleSelectInvoice(invoices[currentIndex + 1].invoice_id);
+    }
+  };
+
+  // Keyboard navigation shortcuts for power-users
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Do not capture keys when user is typing in form controls
+      if (["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+      if (e.key === "Escape") {
+        if (showLauncher) setShowLauncher(false);
+        else if (activeDetail) setActiveDetail(null);
+      } else if (e.key === "ArrowLeft" || e.key === "j" || e.key === "J") {
+        if (activeDetail && hasPrev) handleNavigatePrev();
+      } else if (e.key === "ArrowRight" || e.key === "k" || e.key === "K") {
+        if (activeDetail && hasNext) handleNavigateNext();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showLauncher, activeDetail, hasPrev, hasNext, currentIndex, invoices]);
 
   // Load Invoices & Test Cases
   const refreshInvoices = async () => {
@@ -242,6 +281,10 @@ export default function Home() {
           const sData = await sRes.json();
           setLiveStatus(sData);
         }
+
+        setTimeout(() => {
+          inspectorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
       }
     } catch (err) {
       console.error("Failed to load invoice detail:", err);
@@ -314,14 +357,22 @@ export default function Home() {
 
         {/* State 4: Decision & Explainability Inspector */}
         {activeDetail && activeDetail.decision && (
-          <DecisionInspector
-            detail={activeDetail}
-            onClose={() => setActiveDetail(null)}
-            onUpdated={(updated) => {
-              setActiveDetail(updated);
-              refreshInvoices();
-            }}
-          />
+          <div ref={inspectorRef} style={{ scrollMarginTop: "84px" }}>
+            <DecisionInspector
+              detail={activeDetail}
+              onClose={() => setActiveDetail(null)}
+              onUpdated={(updated) => {
+                setActiveDetail(updated);
+                refreshInvoices();
+              }}
+              onNavigatePrev={handleNavigatePrev}
+              onNavigateNext={handleNavigateNext}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
+              currentIndex={currentIndex >= 0 ? currentIndex : undefined}
+              totalInvoices={invoices.length}
+            />
+          </div>
         )}
 
         {/* State 5: Invoices Dashboard (Review screen when runs exist) */}
