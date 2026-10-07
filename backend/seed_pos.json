@@ -1,0 +1,72 @@
+[
+  {
+    "po_id": "PO-1001",
+    "vendor_name": "Acme Supplies",
+    "po_amount": 5000.0,
+    "po_date": "2026-09-01",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1002",
+    "vendor_name": "Beta Components",
+    "po_amount": 12000.0,
+    "po_date": "2026-09-05",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1003",
+    "vendor_name": "CloudHost Ltd",
+    "po_amount": 3500.0,
+    "po_date": "2026-09-10",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1004",
+    "vendor_name": "Delta Logistics",
+    "po_amount": 8750.0,
+    "po_date": "2026-09-12",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1005",
+    "vendor_name": "Epsilon Software",
+    "po_amount": 15000.0,
+    "po_date": "2026-09-15",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1006",
+    "vendor_name": "Apex Office",
+    "po_amount": 2200.0,
+    "po_date": "2026-09-18",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1007",
+    "vendor_name": "Gamma Hardware",
+    "po_amount": 6000.0,
+    "po_date": "2026-09-20",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1008",
+    "vendor_name": "Sigma Consulting",
+    "po_amount": 10000.0,
+    "po_date": "2026-09-22",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1009",
+    "vendor_name": "Omega Freight",
+    "po_amount": 4200.0,
+    "po_date": "2026-09-25",
+    "status": "open"
+  },
+  {
+    "po_id": "PO-1010",
+    "vendor_name": "Nova Materials",
+    "po_amount": 7300.0,
+    "po_date": "2026-09-28",
+    "status": "open"
+  }
+]

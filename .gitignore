@@ -1,0 +1,29 @@
+# Environment Variables & Secrets
+.env
+.env.*
+*.env
+**/.env
+!.env.example
+!**/.env.example
+
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.db
+invoice_engine.db
+uploads/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Operating System & Logs
+*.log
+.DS_Store
+Thumbs.db

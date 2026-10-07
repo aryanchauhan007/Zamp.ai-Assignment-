@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-10-07T12:28:28.485106",
+  "dataset": "devp1866/high-quality-ocr-ready-invoice-pdfs (Batch 1)",
+  "metrics": {
+    "total_invoices": 100,
+    "vendor_matches": 100,
+    "vendor_accuracy": 100.0,
+    "invoice_no_matches": 100,
+    "invoice_no_accuracy": 100.0,
+    "date_matches": 100,
+    "date_accuracy": 100.0,
+    "total_amount_matches": 100,
+    "total_amount_accuracy": 100.0,
+    "subtotal_matches": 100,
+    "subtotal_accuracy": 100.0,
+    "tax_matches": 100,
+    "tax_accuracy": 100.0,
+    "all_fields_exact_match": 100,
+    "all_fields_accuracy": 100.0,
+    "total_time_seconds": 0.75,
+    "avg_latency_ms": 6.8,
+    "min_latency_ms": 5.28,
+    "max_latency_ms": 10.59,
+    "throughput_invoices_per_sec": 133.73
+  },
+  "rule_engine_avg_latency_ms": 0.582,
+  "decisions_breakdown": {
+    "AUTO_APPROVED": 12,
+    "FLAGGED_FOR_REVIEW": 88,
+    "REJECTED": 0
+  }
+}
