@@ -231,7 +231,6 @@ cd frontend && npm run dev -- -p 3001
 
 ---
 
-## Part 3: Live Interview Troubleshooting Runbook
 
 ### Quick Diagnostic Table
 
@@ -242,15 +241,3 @@ cd frontend && npm run dev -- -p 3001
 | `Cannot reach API` | Backend not started | `python -m uvicorn main:app --host 127.0.0.1 --port 8000` |
 | `DB state dirty` | Prior test runs | Click **Reset Demo Data** in header or call `curl -X POST http://localhost:8000/api/demo/reset` |
 
----
-
-## Interview Q&A Talking Points
-
-* **"Why not use an LLM for the final decision?"**  
-  *"LLMs are phenomenal at extracting unstructured data from messy documents into JSON. But financial decisions must be 100% deterministic, audit-compliant, and mathematically explainable. We use AI for extraction, and pure deterministic Python for business rules."*
-
-* **"How does it handle duplicate invoices?"**  
-  *"We fingerprint invoices on both `(vendor + invoice_number)` and `(vendor + total + date)`. Even if a vendor alters the invoice number, identical amounts on the same date trigger duplicate rejection."*
-
-* **"What would you build in v2?"**  
-  *"1. Human-in-the-loop correction feedback loop to calibrate extraction confidence. 2. Real ERP webhook integration (NetSuite / SAP). 3. Distributed locking on PO cumulative totals for high-throughput batching."*
