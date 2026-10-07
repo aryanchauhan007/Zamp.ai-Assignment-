@@ -4,7 +4,8 @@ export type StageName =
   | "validate" 
   | "match_po" 
   | "apply_rules" 
-  | "decide";
+  | "decide"
+  | "override";
 
 export interface TestCase {
   id: string;

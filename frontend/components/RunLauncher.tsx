@@ -1,13 +1,26 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { UploadCloud, Play, FileText, CheckCircle2, AlertTriangle, XCircle, ArrowUpRight } from "lucide-react";
+import {
+  UploadCloud,
+  Play,
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  ArrowUpRight,
+  Mail,
+  Zap,
+  Paperclip,
+  Code,
+} from "lucide-react";
 import { TestCase } from "@/types";
 
 interface RunLauncherProps {
   testCases: TestCase[];
   onUploadFile: (file: File) => void;
   onRunTestCase: (caseId: string) => void;
+  onSimulateEmail?: (sender: string, subject: string, samplePdf: string, customFile?: File | null) => void;
   isLaunching: boolean;
 }
 
@@ -15,12 +28,20 @@ export function RunLauncher({
   testCases,
   onUploadFile,
   onRunTestCase,
+  onSimulateEmail,
   isLaunching,
 }: RunLauncherProps) {
-  const [activeTab, setActiveTab] = useState<"both" | "test_cases" | "upload">("both");
+  const [activeTab, setActiveTab] = useState<"both" | "test_cases" | "upload" | "email">("both");
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Email Ingestion Webhook simulator state
+  const [emailSender, setEmailSender] = useState("billing@acmeindustrial.com");
+  const [emailSubject, setEmailSubject] = useState("Invoice #INV-2026-9912 - Acme Industrial Supplies");
+  const [emailSamplePdf, setEmailSamplePdf] = useState("happy_01_acme.pdf");
+  const [emailCustomFile, setEmailCustomFile] = useState<File | null>(null);
+  const emailFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -107,6 +128,14 @@ export function RunLauncher({
         >
           <UploadCloud size={12} />
           <span>Upload PDF</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("email")}
+          className={`btn btn-sm ${activeTab === "email" ? "btn-primary" : "btn-secondary"}`}
+          style={{ border: "none", boxShadow: activeTab === "email" ? "var(--shadow-xs)" : "none" }}
+        >
+          <Mail size={12} />
+          <span>Email Webhook Simulator</span>
         </button>
       </div>
 
@@ -341,6 +370,255 @@ export function RunLauncher({
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Entry Point 3: Inbound Email Webhook Simulator */}
+        {activeTab === "email" && (
+          <div className="dash-card" style={{ padding: "24px 28px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 18,
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: "var(--radius-md)",
+                    background: "var(--primary-dim)",
+                    border: "1px solid var(--primary-border)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "var(--primary)",
+                  }}
+                >
+                  <Mail size={20} />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)" }}>
+                      Real-World Email Ingestion Webhook Simulator
+                    </h3>
+                    <span className="badge badge-approved" style={{ fontSize: "0.68rem" }}>
+                      ● HTTP 202 ACCEPTED
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "0.8rem", color: "var(--text-dim)", marginTop: 2 }}>
+                    Simulates SendGrid Inbound Parse or Parseur receiving an AP vendor invoice attachment via email.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Presets */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--text-dim)", fontWeight: 600 }}>Presets:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmailSender("billing@acmeindustrial.com");
+                    setEmailSubject("Invoice #INV-2026-001 - Acme Industrial Supplies");
+                    setEmailSamplePdf("happy_01_acme.pdf");
+                    setEmailCustomFile(null);
+                  }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: "0.72rem", padding: "4px 8px" }}
+                >
+                  Acme (Happy Path)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmailSender("dispatch@betalogistics.com");
+                    setEmailSubject("Freight Delivery Invoice #BL-8921");
+                    setEmailSamplePdf("edge_case_3_near_tolerance.pdf");
+                    setEmailCustomFile(null);
+                  }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: "0.72rem", padding: "4px 8px" }}
+                >
+                  Beta (Tolerance Overage)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmailSender("accounting@apexoffice.com");
+                    setEmailSubject("URGENT: Outstanding Bill #APX-4402");
+                    setEmailSamplePdf("edge_case_4_duplicate.pdf");
+                    setEmailCustomFile(null);
+                  }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: "0.72rem", padding: "4px 8px" }}
+                >
+                  Apex (Duplicate Fraud)
+                </button>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                gap: 20,
+              }}
+            >
+              {/* Form Side */}
+              <div
+                style={{
+                  background: "var(--bg-canvas)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "16px 18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 600, color: "var(--text-main)", marginBottom: 4 }}>
+                    From (Vendor Email):
+                  </label>
+                  <input
+                    type="email"
+                    value={emailSender}
+                    onChange={(e) => setEmailSender(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--border)",
+                      background: "var(--bg-card)",
+                      fontSize: "0.82rem",
+                      color: "var(--text-main)",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 600, color: "var(--text-main)", marginBottom: 4 }}>
+                    Subject Line:
+                  </label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--border)",
+                      background: "var(--bg-card)",
+                      fontSize: "0.82rem",
+                      color: "var(--text-main)",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 600, color: "var(--text-main)", marginBottom: 4 }}>
+                    Attached Invoice PDF:
+                  </label>
+                  <select
+                    value={emailSamplePdf}
+                    onChange={(e) => {
+                      setEmailSamplePdf(e.target.value);
+                      setEmailCustomFile(null);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--border)",
+                      background: "var(--bg-card)",
+                      fontSize: "0.82rem",
+                      color: "var(--text-main)",
+                    }}
+                  >
+                    <option value="happy_01_acme.pdf">Acme Industrial Supplies ($4,250.00 — PO-2026-001)</option>
+                    <option value="happy_02_beta.pdf">Beta Logistics ($1,150.00 — PO-2026-002)</option>
+                    <option value="happy_03_cloudhost.pdf">CloudHost Systems ($9,800.00 — PO-2026-003)</option>
+                    <option value="edge_case_3_near_tolerance.pdf">Beta Freight ($8,280.00 — Exceeds Tolerance)</option>
+                    <option value="edge_case_2_split_po_a.pdf">CloudHost Split Part 1 ($5,500.00)</option>
+                    <option value="edge_case_2_split_po_b.pdf">CloudHost Split Part 2 ($5,500.00 — Split Exceeded)</option>
+                    <option value="edge_case_1_scanned_lowquality.pdf">Scanned Invoice Receipt (Vision OCR Extraction)</option>
+                    <option value="edge_case_4_duplicate.pdf">Duplicate Invoice Submission (Duplicate Check)</option>
+                  </select>
+                </div>
+
+                <div style={{ marginTop: 6, display: "flex", justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    onClick={() => onSimulateEmail?.(emailSender, emailSubject, emailSamplePdf, emailCustomFile)}
+                    disabled={isLaunching}
+                    className="btn btn-primary"
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      padding: "10px 18px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Zap size={16} />
+                    <span>Fire Inbound Email Webhook</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Developer Webhook & cURL Inspector */}
+              <div
+                style={{
+                  background: "#0f172a",
+                  color: "#e2e8f0",
+                  borderRadius: "var(--radius-md)",
+                  padding: "16px 18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.74rem",
+                  boxShadow: "var(--shadow-sm)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #334155", paddingBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#38bdf8" }}>
+                    <Code size={14} />
+                    <span style={{ fontWeight: 600 }}>WEBHOOK PAYLOAD SPEC</span>
+                  </div>
+                  <span style={{ color: "#94a3b8", fontSize: "0.68rem" }}>POST /api/webhooks/email-ingest</span>
+                </div>
+
+                <div>
+                  <p style={{ color: "#64748b", marginBottom: 4 }}>// HTTP Request Body (JSON)</p>
+                  <pre style={{ margin: 0, color: "#a5f3fc", background: "rgba(0,0,0,0.3)", padding: "10px 12px", borderRadius: 4, overflowX: "auto" }}>
+{JSON.stringify(
+  {
+    sender: emailSender,
+    subject: emailSubject,
+    pdf_url: emailSamplePdf,
+  },
+  null,
+  2
+)}
+                  </pre>
+                </div>
+
+                <div style={{ marginTop: "auto", paddingTop: 8, borderTop: "1px solid #334155" }}>
+                  <p style={{ color: "#94a3b8", fontSize: "0.7rem", lineHeight: 1.4 }}>
+                    Incoming emails are parsed asynchronously via FastAPI BackgroundTasks with 100% immutable audit recording.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}

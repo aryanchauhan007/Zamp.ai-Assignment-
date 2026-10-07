@@ -169,6 +169,64 @@ export default function Home() {
     }
   };
 
+  // Simulate inbound email webhook
+  const handleSimulateEmail = async (
+    sender: string,
+    subject: string,
+    samplePdf: string,
+    customFile?: File | null
+  ) => {
+    setIsLaunching(true);
+    try {
+      const payload: {
+        sender: string;
+        subject: string;
+        pdf_url?: string;
+        pdf_base64?: string;
+      } = {
+        sender,
+        subject,
+        pdf_url: samplePdf,
+      };
+
+      if (customFile) {
+        const reader = new FileReader();
+        const b64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (err) => reject(err);
+        });
+        reader.readAsDataURL(customFile);
+        payload.pdf_base64 = await b64Promise;
+        delete payload.pdf_url;
+      }
+
+      const res = await fetch("/api/webhooks/email-ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || "Email webhook ingestion failed");
+        setIsLaunching(false);
+        return;
+      }
+
+      const data = await res.json();
+      const invoiceId = data.invoice_id;
+
+      setActiveInvoiceId(invoiceId);
+      setSelectedInvoiceId(invoiceId);
+      setShowLauncher(false);
+    } catch (err) {
+      console.error("Email webhook ingestion error:", err);
+      alert("Error firing inbound email webhook.");
+    } finally {
+      setIsLaunching(false);
+    }
+  };
+
   // Select an invoice from table to inspect
   const handleSelectInvoice = async (invoiceId: string) => {
     setSelectedInvoiceId(invoiceId);
@@ -237,6 +295,7 @@ export default function Home() {
             testCases={testCases}
             onUploadFile={handleUploadFile}
             onRunTestCase={handleRunTestCase}
+            onSimulateEmail={handleSimulateEmail}
             isLaunching={isLaunching || Boolean(activeInvoiceId && liveStatus && !liveStatus.is_complete)}
           />
         )}
@@ -258,6 +317,10 @@ export default function Home() {
           <DecisionInspector
             detail={activeDetail}
             onClose={() => setActiveDetail(null)}
+            onUpdated={(updated) => {
+              setActiveDetail(updated);
+              refreshInvoices();
+            }}
           />
         )}
 

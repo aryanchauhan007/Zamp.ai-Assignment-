@@ -16,6 +16,7 @@ from typing import Optional
 import aiofiles
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -28,13 +29,17 @@ from database import (
     init_db,
     list_invoices,
     list_pos,
+    upsert_decision,
     upsert_run_log,
 )
 from models import (
     Decision,
+    EmailWebhookRequest,
     Invoice,
     InvoiceDetailResponse,
     InvoiceListItem,
+    OverrideRequest,
+    RuleResult,
     RunLog,
     StatusResponse,
     UploadResponse,
@@ -67,6 +72,14 @@ os.makedirs(UPLOAD_PATH, exist_ok=True)
 @app.on_event("startup")
 async def startup():
     init_db()
+    try:
+        from seed_database import seed_purchase_orders, seed_historical_invoices
+        seed_purchase_orders()
+        if len(list_invoices()) == 0:
+            seed_historical_invoices()
+    except Exception as e:
+        print(f"Startup seed warning: {e}")
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -273,6 +286,166 @@ async def get_invoice_detail(invoice_id: str):
         decision=decision,
         run_logs=logs,
     )
+
+
+@app.get("/api/invoices/{invoice_id}/pdf")
+async def get_invoice_pdf(invoice_id: str):
+    """Serve the original invoice PDF for side-by-side inspection."""
+    file_path = os.path.join(UPLOAD_PATH, f"{invoice_id}.pdf")
+    if not os.path.isfile(file_path):
+        inv = get_invoice(invoice_id)
+        if inv and inv.source_file:
+            alt_test = os.path.join(BASE_DIR, "test_data", inv.source_file)
+            if os.path.isfile(alt_test):
+                file_path = alt_test
+            else:
+                alt_sample = os.path.join(os.path.dirname(BASE_DIR), "sample_invoices", inv.source_file)
+                if os.path.isfile(alt_sample):
+                    file_path = alt_sample
+
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="Invoice PDF not found.")
+
+    return FileResponse(
+        file_path,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={invoice_id}.pdf"},
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# POST /api/invoices/{id}/override — Human-in-the-Loop (HITL) Override
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/api/invoices/{invoice_id}/override", response_model=InvoiceDetailResponse)
+async def override_invoice_decision(invoice_id: str, req: OverrideRequest):
+    """
+    Allow AP Managers to review flagged invoices and manually force-approve or
+    force-reject with an auditable justification.
+    """
+    inv = get_invoice(invoice_id)
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invoice not found.")
+
+    dec = get_decision(invoice_id)
+    if not dec:
+        raise HTTPException(status_code=404, detail="Decision not found.")
+
+    clean_reason = req.reason.strip()
+    if not clean_reason:
+        raise HTTPException(status_code=400, detail="A mandatory justification reason is required for human override.")
+
+    target_status = "AUTO_APPROVED" if req.decision.upper() in ("APPROVED", "AUTO_APPROVED") else "REJECTED"
+    from datetime import datetime, timezone
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    # Append human override rule to evaluated trail
+    override_rule = RuleResult(
+        rule_name="human_in_the_loop_override",
+        passed=(target_status == "AUTO_APPROVED"),
+        detail=f"AP Manager manual override to {target_status}: {clean_reason}",
+    )
+    updated_rules = dec.rules_evaluated + [override_rule]
+
+    new_dec = Decision(
+        invoice_id=invoice_id,
+        status=target_status,
+        reason_code="MANUAL_OVERRIDE",
+        reason_detail=f"Manually overridden by AP Manager ({target_status}): {clean_reason}",
+        rules_evaluated=updated_rules,
+        timestamp=now_iso,
+    )
+    upsert_decision(new_dec)
+
+    # Append audit run log
+    upsert_run_log(RunLog(
+        run_id=str(uuid.uuid4()),
+        invoice_id=invoice_id,
+        stage="override",
+        stage_status="complete",
+        duration_ms=0,
+        detail=f"Human override to {target_status} -- Justification: {clean_reason}",
+        timestamp=now_iso,
+    ))
+
+    return await get_invoice_detail(invoice_id)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# POST /api/webhooks/email-ingest — Real-World Email Ingestion Webhook
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/api/webhooks/email-ingest", status_code=202)
+async def email_webhook_ingest(background_tasks: BackgroundTasks, payload: EmailWebhookRequest):
+    """
+    Simulate SendGrid Inbound Parse / Parseur email webhook ingestion.
+    Accepts incoming email metadata and invoice PDF payload, queuing automated background processing.
+    """
+    invoice_id = str(uuid.uuid4())
+    dest_path = os.path.join(UPLOAD_PATH, f"{invoice_id}.pdf")
+
+    # If base64 payload provided, decode to PDF
+    if payload.pdf_base64:
+        import base64
+        try:
+            raw_b64 = payload.pdf_base64
+            if "," in raw_b64:
+                raw_b64 = raw_b64.split(",", 1)[1]
+            pdf_bytes = base64.b64decode(raw_b64)
+            with open(dest_path, "wb") as f:
+                f.write(pdf_bytes)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid base64 PDF payload: {e}")
+    else:
+        # Default sample invoice from incoming email simulation
+        sample_file = os.path.join(BASE_DIR, "test_data", "happy_01_acme.pdf")
+        if payload.pdf_url:
+            candidate = os.path.join(BASE_DIR, "test_data", payload.pdf_url)
+            if os.path.isfile(candidate):
+                sample_file = candidate
+            elif os.path.isfile(payload.pdf_url):
+                sample_file = payload.pdf_url
+        if not os.path.isfile(sample_file):
+            alt_sample = os.path.join(os.path.dirname(BASE_DIR), "sample_invoices", "invoice_51109301.pdf")
+            if os.path.isfile(alt_sample):
+                sample_file = alt_sample
+        shutil.copyfile(sample_file, dest_path)
+
+    from datetime import datetime, timezone
+    now_iso = datetime.now(timezone.utc).isoformat()
+    run_id = str(uuid.uuid4())
+
+    for stage in STAGES:
+        upsert_run_log(RunLog(
+            run_id=run_id,
+            invoice_id=invoice_id,
+            stage=stage,
+            stage_status="pending",
+            timestamp=now_iso,
+        ))
+
+    # Record email ingest receipt log
+    upsert_run_log(RunLog(
+        run_id=run_id,
+        invoice_id=invoice_id,
+        stage="ingest",
+        stage_status="running",
+        duration_ms=0,
+        detail=f"Inbound Email from {payload.sender} — Subject: '{payload.subject}'",
+        timestamp=now_iso,
+    ))
+
+    background_tasks.add_task(process_invoice, dest_path, invoice_id)
+
+    return {
+        "status": "accepted",
+        "invoice_id": invoice_id,
+        "sender": payload.sender,
+        "subject": payload.subject,
+        "message": "Email invoice accepted and queued for automated processing pipeline.",
+    }
+
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────

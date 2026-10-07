@@ -78,7 +78,7 @@ class Decision(BaseModel):
 class RunLog(BaseModel):
     run_id: str
     invoice_id: str
-    stage: Literal["ingest", "extract", "validate", "match_po", "apply_rules", "decide"]
+    stage: Literal["ingest", "extract", "validate", "match_po", "apply_rules", "decide", "override"]
     stage_status: Literal["pending", "running", "complete", "failed"]
     duration_ms: int | None = None
     detail: str | None = None
@@ -117,3 +117,17 @@ class InvoiceListItem(BaseModel):
     status: str | None
     timestamp: str | None
     source_file: str
+
+
+class OverrideRequest(BaseModel):
+    decision: str   # "APPROVED" or "REJECTED"
+    reason: str     # Mandatory plain-text audit justification
+
+
+class EmailWebhookRequest(BaseModel):
+    sender: str
+    subject: str
+    pdf_base64: str | None = None
+    pdf_url: str | None = None
+
+
