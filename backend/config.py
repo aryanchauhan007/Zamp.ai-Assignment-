@@ -75,11 +75,17 @@ DATABASE_PATH: str = "invoice_engine.db"
 # ── Upload directory ──────────────────────────────────────────────────────────
 UPLOAD_DIR: str = "uploads"
 
-CORS_ORIGINS: list[str] = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "http://localhost:5173",
-    "http://localhost:8080",
-]
+cors_env = os.getenv("CORS_ORIGINS")
+if cors_env:
+    CORS_ORIGINS: list[str] = [orig.strip() for orig in cors_env.split(",") if orig.strip()]
+else:
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "https://zamp-ai-assignment.vercel.app",
+    ]
+
