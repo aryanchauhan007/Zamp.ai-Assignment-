@@ -62,7 +62,12 @@ export default function Home() {
       }
       if (e.key === "Escape") {
         if (showLauncher) setShowLauncher(false);
-        else if (activeDetail) setActiveDetail(null);
+        else if (activeDetail) {
+          setActiveDetail(null);
+          setSelectedInvoiceId(null);
+          setLiveStatus(null);
+          setActiveInvoiceId(null);
+        }
       } else if (e.key === "ArrowLeft" || e.key === "j" || e.key === "J") {
         if (activeDetail && hasPrev) handleNavigatePrev();
       } else if (e.key === "ArrowRight" || e.key === "k" || e.key === "K") {
@@ -314,6 +319,15 @@ export default function Home() {
     }
   };
 
+  const isInspecting = Boolean(activeDetail && activeDetail.decision);
+
+  const handleCloseInspector = () => {
+    setActiveDetail(null);
+    setSelectedInvoiceId(null);
+    setLiveStatus(null);
+    setActiveInvoiceId(null);
+  };
+
   const hasRuns = invoices.length > 0;
 
   return (
@@ -326,13 +340,13 @@ export default function Home() {
         hasRuns={hasRuns}
       />
 
-      <main style={{ flex: 1, padding: "32px 24px" }}>
+      <main style={{ flex: 1, padding: "28px 24px" }}>
         {/* State 1: First visit — empty state (no runs, no active launch) */}
-        {!hasRuns && !activeInvoiceId && !showLauncher && (
+        {!hasRuns && !activeInvoiceId && !showLauncher && !isInspecting && (
           <EmptyState onStartRun={() => setShowLauncher(true)} />
         )}
 
-        {/* State 2: Starting a run (Two entry points visible at once) */}
+        {/* State 2: Starting a run (Launcher) */}
         {showLauncher && (
           <RunLauncher
             testCases={testCases}
@@ -343,8 +357,8 @@ export default function Home() {
           />
         )}
 
-        {/* State 3: Live run panel (Stepper with real-time status polling) */}
-        {liveStatus && (
+        {/* State 3: Live run panel (Active stepper while pipeline is processing) */}
+        {liveStatus && (!isInspecting || !liveStatus.is_complete) && (
           <LivePipelinePanel
             status={liveStatus}
             detail={activeDetail}
@@ -355,12 +369,12 @@ export default function Home() {
           />
         )}
 
-        {/* State 4: Decision & Explainability Inspector */}
-        {activeDetail && activeDetail.decision && (
-          <div ref={inspectorRef} style={{ scrollMarginTop: "84px" }}>
+        {/* State 4: Focused Audit & Decision Inspector Workspace */}
+        {isInspecting && activeDetail && (
+          <div ref={inspectorRef} style={{ scrollMarginTop: "24px" }}>
             <DecisionInspector
               detail={activeDetail}
-              onClose={() => setActiveDetail(null)}
+              onClose={handleCloseInspector}
               onUpdated={(updated) => {
                 setActiveDetail(updated);
                 refreshInvoices();
@@ -375,8 +389,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* State 5: Invoices Dashboard (Review screen when runs exist) */}
-        {hasRuns && (
+        {/* State 5: Invoices Queue Dashboard (Shown when not in focused inspection mode) */}
+        {hasRuns && !isInspecting && (
           <InvoicesDashboard
             invoices={invoices}
             selectedInvoiceId={selectedInvoiceId}
